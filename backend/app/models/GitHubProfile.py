@@ -6,6 +6,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
+from typing import List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.repository import Repository
+
+
+
 class GitHubProfile(Base):
      #name of the tabe in POSTgREs
      __tablename__ = "github_profiles"

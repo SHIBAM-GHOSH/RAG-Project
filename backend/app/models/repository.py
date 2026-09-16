@@ -4,6 +4,16 @@ from sqlalchemy import String, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from typing import List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.GitHubProfile import GitHubProfile
+    from app.models.repository_file import RepositoryFile
+    from app.models.chunk import CodeChunk
+    from app.models.ingestion_job import IngestionJob
+
+
+
 
 
 class Repository(Base):

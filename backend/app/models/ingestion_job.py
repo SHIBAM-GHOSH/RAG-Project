@@ -12,6 +12,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.repository import Repository
+
+
+
 
 class IngestionJob(Base):
     # Table name in PostgreSQL

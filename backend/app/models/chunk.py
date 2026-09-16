@@ -12,6 +12,14 @@ from pgvector.sqlalchemy import Vector
 
 from app.core.database import Base
 
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.repository import Repository
+    from app.models.repository_file import RepositoryFile
+
+
+
 
 class CodeChunk(Base):
     # Table name in PostgreSQL
