@@ -1,13 +1,35 @@
-langchain
-langchain-core
-langchain-community
+# Web Framework & Server
+fastapi
+uvicorn
+python-multipart
+
+streamlit
+requests
+
+
+
+# Relational Database Persistence (SQLite & AWS RDS PostgreSQL)
+sqlalchemy
+
+# Official Groq SDK for LLM Inference
+groq
+
+# PDF Processing & Text Chunking
 pypdf
-pymupdf
+langchain-text-splitters
+
+# Vector Embeddings & Pinecone Cloud Vector DB
 sentence-transformers
-faiss-cpu
-chromadb
-langchain-groq
+pinecone
+
+# Rate Limiting & Environment Config
+slowapi
 python-dotenv
-typesense
-langchain_openai
-langgraph
+
+# Data Validation & Testing
+pydantic
+pytest
+httpx
+
+#other libris
+psycopg2-binary
