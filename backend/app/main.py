@@ -12,6 +12,12 @@ WHAT IT DOES:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+#rate limiter
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+
 # Import all API routers
 from backend.app.api.project_creator import router as projects_router
 from backend.app.api.doc_uploader import router as documents_router
@@ -21,12 +27,20 @@ from backend.app.api.chat_router import router as chat_router
 from backend.app.core.database import Base, engine
 import backend.app.models.db_models  # Load ORM models for table creation
 
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Study Session RAG API",
     description="Production-Grade RAG API for Study Sessions using Groq LLM & Pinecone",
     version="1.0.0"
 )
+
+# Initialize IP-based Rate Limiter
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
 
 # Auto-create tables in database if they do not exist
 Base.metadata.create_all(bind=engine)

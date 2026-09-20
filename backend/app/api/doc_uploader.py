@@ -1,19 +1,16 @@
 """
 =============================================================================
 FILE: backend/app/api/doc_uploader.py
-PURPOSE: Handles PDF Document Uploads & Persistent DB Metadata.
-WHAT IT DOES:
-  1. Accepts PDF file uploads via HTTP POST.
-  2. Verifies Project existence in SQL Database.
-  3. Extracts text, chunks PDF, and upserts embeddings into Pinecone.
-  4. Saves persistent document record in SQL Database.
+PURPOSE: Handles PDF Document Uploads & Persistent DB Metadata with Rate Limits.
 =============================================================================
 """
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from backend.app.core.database import get_db
 from backend.app.models.db_models import ProjectModel, DocumentModel
@@ -21,10 +18,16 @@ from backend.app.models.schemas import DocumentResponse
 from backend.app.services.pdf_service import pdf_processor
 from backend.app.services.vector_service import vector_service
 
+# Initialize rate limiter (tracks client IP)
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter(prefix="/api/v1/projects", tags=["Documents"])
 
+# Upload PDF Document Endpoint with Rate Limiter (Max 3 uploads per minute per IP to protect memory & Pinecone storage)
 @router.post("/{project_id}/documents", response_model=DocumentResponse)
+@limiter.limit("3/minute")
 async def upload_document(
+    request: Request,
     project_id: str,
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
@@ -64,7 +67,6 @@ async def upload_document(
         total_chunks=total_chunks,
         created_at=datetime.now(timezone.utc)
     )
-
     
     db.add(doc_record)
     db.commit()

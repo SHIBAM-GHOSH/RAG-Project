@@ -14,8 +14,10 @@ WHAT IT DOES:
 import streamlit as st
 import requests
 
-# Backend API Base URL
-API_URL = "http://127.0.0.1:8000/api/v1"
+# New line 18 (reads API_URL from environment inside Docker, defaults to localhost)
+import os
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/api/v1")
+
 
 # Page Configuration
 st.set_page_config(page_title="ChatGPT Projects - Study RAG", page_icon="📁", layout="wide")

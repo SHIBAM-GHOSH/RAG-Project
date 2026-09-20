@@ -1,0 +1,36 @@
+# =============================================================================
+# FILE: docker-compose.yml
+# PURPOSE: Container orchestration for FastAPI Backend & Streamlit Frontend.
+# WHAT IT DOES:
+#   1. Builds and launches 'backend' container (FastAPI on Port 8000).
+#   2. Builds and launches 'frontend' container (Streamlit on Port 8501).
+#   3. Connects frontend to backend via internal Docker network (http://backend:8000).
+#   4. Injects .env variables (Database URL, Groq API Key, Pinecone API Key).
+# =============================================================================
+
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/app/Dockerfile
+    container_name: rag_backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: rag_frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://backend:8000/api/v1
+    depends_on:
+      - backend
+    restart: always
