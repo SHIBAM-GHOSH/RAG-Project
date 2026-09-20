@@ -14,10 +14,8 @@ load_dotenv()  # pulls variables from .env into os.environ
 # ----------------------------------------------------------------------
 # Connection URL – default to SQLite only if DATABASE_URL is missing
 # ----------------------------------------------------------------------
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///./study_rag.db",  # fallback for safety
-)
+DATABASE_URL = os.getenv("DATABASE_URL") or "sqlite:///./study_rag.db"
+
 
 # ----------------------------------------------------------------------
 # Engine creation – MySQL needs no special kwargs; SQLite needs check_same_thread

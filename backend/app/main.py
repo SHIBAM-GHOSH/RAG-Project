@@ -18,12 +18,19 @@ from backend.app.api.doc_uploader import router as documents_router
 from backend.app.api.session_manager import router as sessions_router
 from backend.app.api.chat_router import router as chat_router
 
+from backend.app.core.database import Base, engine
+import backend.app.models.db_models  # Load ORM models for table creation
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Study Session RAG API",
     description="Production-Grade RAG API for Study Sessions using Groq LLM & Pinecone",
     version="1.0.0"
 )
+
+# Auto-create tables in database if they do not exist
+Base.metadata.create_all(bind=engine)
+
 
 # Configure CORS (Cross-Origin Resource Sharing)
 app.add_middleware(
