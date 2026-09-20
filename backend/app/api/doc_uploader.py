@@ -11,7 +11,7 @@ WHAT IT DOES:
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 
@@ -62,8 +62,9 @@ async def upload_document(
         project_id=project_id,
         filename=file.filename,
         total_chunks=total_chunks,
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
+
     
     db.add(doc_record)
     db.commit()

@@ -10,7 +10,7 @@ WHAT IT DOES:
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -37,8 +37,9 @@ def create_session(project_id: str, payload: SessionCreate, db: Session = Depend
         id=session_id,
         project_id=project_id,
         name=payload.name,
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
+
 
     db.add(session_record)
     db.commit()

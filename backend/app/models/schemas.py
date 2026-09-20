@@ -31,7 +31,7 @@ class DocumentResponse(BaseModel):
 # ==========================================
 class SessionCreate(BaseModel):
     """Payload required to create a chat session (e.g. s1) inside a project"""
-    name: str = Field(..., description="Name of the session", example="s1")
+    name: str = Field(..., description="Name of the session", json_schema_extra={"example": "s1"})
 
 class SessionResponse(BaseModel):
     """API response model for a chat session"""
@@ -46,7 +46,7 @@ class SessionResponse(BaseModel):
 # ==========================================
 class ChatQueryRequest(BaseModel):
     """Payload sent by user when asking a question in a session"""
-    question: str = Field(..., description="User question", example="What is Newton's second law?")
+    question: str = Field(..., description="User question", json_schema_extra={"example": "What is Newton's second law?"})
 
 class SourceCitation(BaseModel):
     """Citation snippet showing which page the answer came from"""
