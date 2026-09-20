@@ -1,4 +1,3 @@
-@"
 # Environment variables - NEVER commit this
 .env
 
@@ -10,7 +9,6 @@ venv/
 __pycache__/
 *.pyc
 *.pyo
-*.pyd
 
 # pytest cache
 .pytest_cache/
@@ -22,9 +20,3 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
-
-# Build artifacts
-*.egg-info/
-dist/
-build/
-"@ | Out-File -FilePath "d:\CODING\Development\RAG-Project2\.gitignore" -Encoding utf8
