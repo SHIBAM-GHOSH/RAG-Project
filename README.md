@@ -25,7 +25,7 @@ Production-grade Retrieval-Augmented Generation (RAG) platform that enables stud
 - **HTTP Client**: Python `requests` communicating with FastAPI REST backend
 
 ### Backend (`backend/`)
-- **Core Framework**: Python 3.11, FastAPI, Uvicorn, Pydantic V2
+- **Core Framework**: Python 3.11, FastAPI, Uvicorn, Pydantic V2, SlowAPI (Rate Limiter)
 - **Database & ORM**: Supabase PostgreSQL, SQLAlchemy 2.0, Psycopg2-binary
 - **Vector DB & Search**: Pinecone Serverless SDK (384 dimensions, Cosine metric)
 - **Embedding Model**: HuggingFace `sentence-transformers/all-MiniLM-L6-v2`
@@ -40,68 +40,53 @@ Production-grade Retrieval-Augmented Generation (RAG) platform that enables stud
 
 ## 🏛️ System Architecture
 
-The platform follows a modular decoupled microservices-inspired architecture comprising a Streamlit frontend, a FastAPI REST API server, a relational PostgreSQL metadata store, a Pinecone vector database, local embedding transformers, and Groq's high-speed inference engine.
+Modular RAG architecture integrating a FastAPI backend with managed relational storage, vector search, embeddings, and LLM services.
 
 ```mermaid
-flowchart TD
-    subgraph FrontendClient ["🖥️ Streamlit UI Dashboard"]
-        Sidebar["Sidebar Project Manager"]
-        TabChats["💬 Chats Tab & Session Switcher"]
-        TabSources["📄 Sources Tab (PDF Uploader)"]
-        ChatInput["Chat Input Box (Bottom Pinned)"]
-        CitationExpander["📌 Citation & Page Inspector"]
+flowchart LR
+    subgraph Client ["🖥️ Client Tier"]
+        User["Student / User"]
+        UI["Streamlit UI Dashboard"]
     end
 
-    subgraph FastApiBackend ["⚙️ FastAPI REST Backend Application"]
-        MainApp["Main FastAPI App (CORS Enabled)"]
-        
-        ProjectRouter["Project Creator API (/projects)"]
-        DocRouter["Document Uploader API (/documents)"]
-        SessionRouter["Session Manager API (/sessions)"]
-        ChatRouter["Chat Query Router (/chat)"]
-        
-        VectorService["VectorStoreService (all-MiniLM-L6-v2)"]
-        RagService["RAGService (Prompt Builder)"]
+    subgraph Backend ["⚙️ FastAPI Backend Application"]
+        API["FastAPI App & Routers"]
+        DocSvc["Document & Project Service"]
+        RagSvc["RAG & Chat Service"]
     end
 
-    subgraph RelationalDB ["🐘 Supabase PostgreSQL (SQLAlchemy ORM)"]
-        ProjectsTable[("projects Table")]
-        DocsTable[("documents Table")]
-        SessionsTable[("sessions Table")]
+    subgraph DataLayer ["💾 Data Layer"]
+        Postgres[("Supabase PostgreSQL")]
+        Pinecone[("Pinecone Vector DB")]
     end
 
-    subgraph VectorCloud ["🌲 Pinecone Vector DB"]
-        PineconeIndex[("study-rag-index (384d Cosine)")]
+    subgraph AIServices ["⚡ AI Services"]
+        EmbedModel["SentenceTransformer (all-MiniLM-L6-v2)"]
+        GroqLLM["Groq Cloud API (groq/compound)"]
     end
 
-    subgraph ExternalLLM ["⚡ External AI Services"]
-        GroqAPI["Groq Cloud API (groq/compound)"]
-    end
+    %% Client Interactions
+    User -->|"Interacts with UI"| UI
+    UI -->|"HTTP REST API Requests"| API
 
-    %% Client Communication
-    Sidebar -->|"POST/GET /projects"| ProjectRouter
-    TabSources -->|"POST /documents"| DocRouter
-    TabChats -->|"POST/GET /sessions"| SessionRouter
-    ChatInput -->|"POST /chat"| ChatRouter
+    %% Backend to Relational DB Metadata
+    API -->|"CRUD Projects, Docs & Sessions"| Postgres
 
-    %% Backend Controllers to Database
-    ProjectRouter -->|"Insert/Read Projects"| ProjectsTable
-    DocRouter -->|"Insert Document Metadata"| DocsTable
-    SessionRouter -->|"Insert/Read Sessions"| SessionsTable
+    %% Document Ingestion Flow
+    API -->|"Upload PDF"| DocSvc
+    DocSvc -->|"Generate 384d Vectors"| EmbedModel
+    DocSvc -->|"Upsert Vectors & Metadata"| Pinecone
+    DocSvc -->|"Save Document Metadata"| Postgres
 
-    %% Document Upload Pipeline
-    DocRouter -->|"Generate 384d Vectors"| VectorService
-    VectorService -->|"Upsert Chunks + Metadata Filter"| PineconeIndex
-
-    %% Chat Query Pipeline
-    ChatRouter --> RagService
-    RagService -->|"Query Similarity Vector + Filter(project_id)"| VectorService
-    VectorService <-->|"Vector Search Matches"| PineconeIndex
-    RagService -->|"Grounded Prompt + Context"| GroqAPI
-    GroqAPI -->>|"Answer Text"| RagService
-    RagService -->>|"Answer + Page Citations"| ChatRouter
-    ChatRouter -->>|"JSON Response"| ChatInput
-    ChatInput --> CitationExpander
+    %% RAG Retrieval Flow
+    API -->|"Execute Chat Query"| RagSvc
+    RagSvc -->|"Generate Query Vector"| EmbedModel
+    RagSvc -->|"Filtered Similarity Search"| Pinecone
+    Pinecone -->|"Return Top-k Context Chunks"| RagSvc
+    RagSvc -->|"Grounded Prompt + Context"| GroqLLM
+    GroqLLM -->|"Generated Answer"| RagSvc
+    RagSvc -->|"Answer + Page Citations"| API
+    API -->|"JSON Response"| UI
 ```
 
 ---
@@ -250,14 +235,14 @@ RAG-Project2/ (Root)
 ### Documents
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/v1/projects/{project_id}/documents` | Upload PDF file, chunk text, embed into Pinecone, and save metadata |
+| `POST` | `/api/v1/projects/{project_id}/documents` | Upload PDF file, chunk text, embed into Pinecone, and save metadata (Rate Limit: 3/min) |
 
 ### Sessions & Chat
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `POST` | `/api/v1/projects/{project_id}/sessions` | Create a new chat session thread in a project |
 | `GET` | `/api/v1/projects/{project_id}/sessions` | List all chat sessions belonging to a project |
-| `POST` | `/api/v1/sessions/{session_id}/chat` | Query RAG pipeline for session; returns answer with page citations |
+| `POST` | `/api/v1/sessions/{session_id}/chat` | Query RAG pipeline for session; returns answer with page citations (Rate Limit: 5/min) |
 
 ---
 
