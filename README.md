@@ -32,7 +32,7 @@ Production-grade Retrieval-Augmented Generation (RAG) platform that enables stud
 - **LLM Provider**: Groq Cloud API (`groq/compound`) via official `groq` Python SDK
 - **Testing**: `pytest`, `fastapi.testclient.TestClient`
 
-### CI/CD & Infrastructure
+### CI/CD Pipeline
 - **Continuous Integration**: GitHub Actions (`.github/workflows/ci.yml`)
 - **Secrets Management**: GitHub Repository Secrets (`DATABASE_URL`, `GROQ_API_KEY`, `PINECONE_API_KEY`)
 
@@ -43,49 +43,32 @@ Production-grade Retrieval-Augmented Generation (RAG) platform that enables stud
 Modular RAG architecture integrating a FastAPI backend with managed relational storage, vector search, embeddings, and LLM services.
 
 ```mermaid
-flowchart LR
-    subgraph Client ["🖥️ Client Tier"]
-        User["Student / User"]
-        UI["Streamlit UI Dashboard"]
+flowchart TD
+    subgraph Client ["🖥️ Frontend Client"]
+        UI["Streamlit Dashboard"]
     end
 
-    subgraph Backend ["⚙️ FastAPI Backend Application"]
-        API["FastAPI App & Routers"]
-        DocSvc["Document & Project Service"]
-        RagSvc["RAG & Chat Service"]
+    subgraph Backend ["⚙️ FastAPI Backend"]
+        API["FastAPI REST Server"]
     end
 
-    subgraph DataLayer ["💾 Data Layer"]
-        Postgres[("Supabase PostgreSQL")]
-        Pinecone[("Pinecone Vector DB")]
+    subgraph Data ["💾 Data Storage"]
+        Postgres[("Supabase PostgreSQL\n(Projects, Sessions, Metadata)")]
+        Pinecone[("Pinecone Vector DB\n(384d Document Embeddings)")]
     end
 
-    subgraph AIServices ["⚡ AI Services"]
-        EmbedModel["SentenceTransformer (all-MiniLM-L6-v2)"]
-        GroqLLM["Groq Cloud API (groq/compound)"]
+    subgraph AI ["⚡ AI Engines"]
+        Embedder["SentenceTransformer\n(all-MiniLM-L6-v2)"]
+        Groq["Groq Cloud LLM\n(groq/compound)"]
     end
 
-    %% Client Interactions
-    User -->|"Interacts with UI"| UI
-    UI -->|"HTTP REST API Requests"| API
-
-    %% Backend to Relational DB Metadata
-    API -->|"CRUD Projects, Docs & Sessions"| Postgres
-
-    %% Document Ingestion Flow
-    API -->|"Upload PDF"| DocSvc
-    DocSvc -->|"Generate 384d Vectors"| EmbedModel
-    DocSvc -->|"Upsert Vectors & Metadata"| Pinecone
-    DocSvc -->|"Save Document Metadata"| Postgres
-
-    %% RAG Retrieval Flow
-    API -->|"Execute Chat Query"| RagSvc
-    RagSvc -->|"Generate Query Vector"| EmbedModel
-    RagSvc -->|"Filtered Similarity Search"| Pinecone
-    Pinecone -->|"Return Top-k Context Chunks"| RagSvc
-    RagSvc -->|"Grounded Prompt + Context"| GroqLLM
-    GroqLLM -->|"Generated Answer"| RagSvc
-    RagSvc -->|"Answer + Page Citations"| API
+    %% Connections
+    UI -->|"HTTP REST API"| API
+    API -->|"Save / Read Metadata"| Postgres
+    API -->|"1. Generate Embeddings"| Embedder
+    API -->|"2. Vector Search / Upsert"| Pinecone
+    API -->|"3. Grounded Q&A Prompt"| Groq
+    Groq -->|"Answer + Citations"| API
     API -->|"JSON Response"| UI
 ```
 
